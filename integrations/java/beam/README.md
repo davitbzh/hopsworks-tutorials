@@ -155,6 +155,21 @@ mvn compile exec:java \
     --runner=DataflowRunner"
 ```
 
+```bash
+flink run -c com.hopsworks.tutorials.beam.TaxiRideInsertStream beam-bundled-3.3.0-SNAPSHOT.jar --project=hops-20 --hopsworksHost=651b9cf0-086d-11ee-9030-330d5f0cd08e.cloud.hopsworks.ai \
+--hopsworksApi=JTtbtF9DAw5kz4Zo.5S82rj17bfneQFRfHtL04E6Uri2WmXodLG3o01lmhFptoZMLHpIQxEM1NXPY498Q \
+--hopsworksProject=beam_flink_run \
+--featureGroupName=taxi_ride \
+--featureGroupVersion=1 \
+--inputTopic=projects/pubsub-public-data/topics/taxirides-realtime \
+--runner=FlinkRunner \
+    
+flink run -c org.apache.beam.examples.WordCount word-count-beam-bundled-0.1.jar \
+    --runner=FlinkRunner \
+    --output=gs://davit-eunorth/java-wordcount-out
+
+```
+
 #### Backfill feature data to offline FG
 Above pipeline writes real time features to online feature store that stores the latest values per primary key(s). 
 To save historical data for batch data analysis or model training you need to start backfill job. You can do this 

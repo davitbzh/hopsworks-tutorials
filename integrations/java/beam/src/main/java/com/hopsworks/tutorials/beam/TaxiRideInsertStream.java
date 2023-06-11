@@ -47,7 +47,7 @@ public class TaxiRideInsertStream {
   
   
   public static void main(String[] args) throws Exception {
-  
+    
     WriteHopsWorksOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(WriteHopsWorksOptions.class);
   
     FeatureStore fs = HopsworksConnection.builder()
