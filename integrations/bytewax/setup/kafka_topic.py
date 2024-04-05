@@ -3,8 +3,8 @@ import hopsworks
 project = hopsworks.login()
 
 # create kafka topic
-KAFKA_TOPIC_NAME = "credit_card_transactions"
-SCHEMA_NAME = "credit_card_transactions_schema"
+KAFKA_TOPIC_NAME = "live_transactions"
+SCHEMA_NAME = "live_transactions_schema"
 
 kafka_api = project.get_kafka_api()
 job_api = project.get_jobs_api()

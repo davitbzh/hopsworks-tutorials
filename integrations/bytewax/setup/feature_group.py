@@ -6,7 +6,6 @@ project = hopsworks.login()
 fs = project.get_feature_store()
 
 # Setup the feature groups for the bytewax pipelines
-# Price Features
 features = [
     Feature(name="cc_num", type="string"),
     Feature(name="timestamp", type="timestamp"),

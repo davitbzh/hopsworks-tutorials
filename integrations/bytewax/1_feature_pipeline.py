@@ -3,10 +3,10 @@ import json
 from datetime import datetime, timedelta, timezone
 
 import bytewax.operators.window as win
-from bytewax.connectors.kafka import KafkaSourceMessage
 from bytewax import operators as op
-from bytewax.connectors.kafka import operators as kop
 from bytewax.dataflow import Dataflow
+from bytewax.connectors.kafka import KafkaSourceMessage
+from bytewax.connectors.kafka import operators as kop
 from bytewax.operators.window import EventClockConfig, TumblingWindow, SlidingWindow
 
 import hopsworks
@@ -34,9 +34,15 @@ def get_event_time(event):
 def format_event(event):
     key, (metadata, data) = event
     values = [x for x in data]
+
+    date_time = datetime.now(timezone.utc)
+    date_time = datetime(date_time.year, date_time.month, date_time.day, date_time.hour, date_time.minute,
+                         date_time.second)
+    date_time = date_time.replace(tzinfo=timezone.utc)
+
     return key, {
         "cc_num": key,
-        "timestamp": int(float(datetime.now(timezone.utc).timestamp()) * 1000),
+        "timestamp": date_time,  # int(float(datetime.now(timezone.utc).timestamp()) * 1000),
         "min_amount": min(values),
         "max_amount": max(values),
         "count": len(values),
@@ -51,7 +57,7 @@ def get_flow(feature_group_name, feature_group_version, hopsworks_host, hopswork
         project=hopsworks_project,
         api_key_value=hopsworks_api_key
     )
-    fs = project.get_feature_store()    
+    fs = project.get_feature_store()
 
     # get feature group and its topic configuration
     feature_group = fs.get_feature_group(feature_group_name, feature_group_version)
@@ -69,7 +75,7 @@ def get_flow(feature_group_name, feature_group_version, hopsworks_host, hopswork
 
     # Define the dataflow object and kafka input.
     stream = kop.input(
-        "kafka-in", flow, brokers=[kafka_config['bootstrap.servers']], topics=["credit_card_transactions"],
+        "kafka-in", flow, brokers=[kafka_config['bootstrap.servers']], topics=["live_transactions"],
         add_config=kafka_config
     )
 
@@ -99,10 +105,10 @@ def get_flow(feature_group_name, feature_group_version, hopsworks_host, hopswork
     )
 
     windowed_stream = win.fold_window("add", keyed_stream, clock, windower, list, accumulate)
-    #op.inspect("inspect-windowed-stream", windowed_stream)
+    # op.inspect("inspect-windowed-stream", windowed_stream)
 
     formatted_stream = op.map("format_event", windowed_stream, format_event)
-    #op.inspect("inspect-formatted-stream", formatted_stream)
+    # op.inspect("inspect-formatted-stream", formatted_stream)
 
     # op.output("out", formatted_stream, StdOutSink())
     # sync to feature group topic

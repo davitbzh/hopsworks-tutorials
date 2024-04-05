@@ -16,6 +16,7 @@ import math
 import bisect
 from typing import Optional, Union, Any, Dict, List, TypeVar, Tuple
 import json
+
 # Seed for Reproducibility
 faker = Faker()
 faker.seed_locale('en_US', 0)
@@ -139,7 +140,7 @@ def generate_df_with_profiles(credit_cards: list) -> pd.DataFrame:
     profiles_df = pd.DataFrame.from_records(profiles)
     profiles_df['birthdate'] = pd.to_datetime(profiles_df['birthdate'])
     profiles_df['cc_expiration_date'] = pd.to_datetime(profiles_df['cc_expiration_date'], format="%m/%y")
-    #profiles_df['cc_num'] = pd.to_numeric(profiles_df['cc_num'])
+    # profiles_df['cc_num'] = pd.to_numeric(profiles_df['cc_num'])
 
     return profiles_df
 
@@ -458,11 +459,17 @@ def create_transactions_as_df(credit_cards: list) -> pd.DataFrame:
     transactions_df = transactions_df.drop(columns=["fraud_label"])
     return transactions_df, fraud_labels
 
+
 # get dataset
 def get_transactions():
     credit_cards = generate_list_credit_card_numbers()
     profiles_df = create_profiles_as_df(credit_cards)
     trans_df, fraud_labels = create_transactions_as_df(credit_cards)
+    return trans_df, fraud_labels, profiles_df
+
+
+def simulate_live_transactions():
+    trans_df, _, _ = get_transactions()
     trans_df = trans_df[['tid', 'datetime', 'amount', 'cc_num']]
     trans_df['json'] = trans_df.apply(lambda x: x.to_json(), axis=1)
-    return [json.loads(i) for i in  trans_df.json.values]
+    return [json.loads(i) for i in trans_df.json.values]
