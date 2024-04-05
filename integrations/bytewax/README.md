@@ -14,9 +14,9 @@ You will also
 ## Before you begin
 For the tutorials to work, you need to Install the required python libraries 
 ```bash
-pip install hopsworks
-pip install bytewax
-pip install websocket-client
+pip install hopsworks==3.7.0rc1 
+pip install bytewax==0.19.1
+pip install faker==24.4.0
 ```
 
 Once you have the above, define the following environment variable:
@@ -31,6 +31,15 @@ git clone https://github.com/logicalclocks/hopsworks-tutorials
 cd ./hopsworks-tutorials/integrations/bytewax
 ```
 
+## Define env variables
+```bash
+HOPSWORKS_HOST=REPLACE_WITH_YOUR_HOPSWORKS_CLUSTER_HOST
+HOPSWORKS_PROJECT_NAME=REPLACE_WITH_YOUR_HOPSWORKS_PROJECT_NAME
+HOPSWORKS_API_KEY=REPLACE_WITH_YOUR_HOPSWORKS_API_KEY
+FEATURE_GROUP_NAME="transactions_windowed_agg"
+FEATURE_GROUP_VERSION=1
+```
+
 ## Create a Feature Group
 Currently, bytewax support for Hopsworks feature store is experimental and only write operation is supported. This means
 that Feature group metadata needs to be registered in Hopsworks Feature store before you can write real time features computed
@@ -39,28 +48,35 @@ by Bytewax.
 Full documentation how to create feature group using HSFS APIs can be found [here](https://docs.hopsworks.ai/3.4/user_guides/fs/feature_group/create/).
 
 This tutorial comes with a python program to create a feature group:
-- `python ./setup/feature_group.py`
+```bash
+python ./setup/feature_group.py
+```
 
 
 ## Data source
+### Create Kafka topic for data source
 Feature pipeline needs to connect to some data source to read the data to be processed. In this tutorial you will
-subscribe to publicly available Coinbase websocket. 
+simulate credit card transaction and write to kafka topic that will be used as a source for  real time feature engineering pipeline.
 
-The feature pipeline will maintain an orderbook in real-time and then compute some very basic information about the orderbook as features. For more details on the code used in the dataflow, see the [Byetwax official guide](https://www.bytewax.io/guides/real-time-financial-exchange-order-book-application). 
+This tutorial comes with python code  that sets up kafka topic on your Hopsworks cluster
+```bash
+python ./setup/kafka_topic.py
+```
+
+### Simulate live transactions
+```bash
+python ./0_simulate_transaction.py
+```
+
 ## Start Bytewax pipeline:
 Now you are ready to run a streaming pipeline using Bytewax and write real time feature data to feature group 
-`order_book` version `1`.
-
-```bash
-FEATURE_GROUP_NAME=order_book
-FEATURE_GROUP_VERSION=1
-```
+`transacton_windowed_agg` version `1`.
 
 ### Real time feature engineering in Bytewax
 To submit Bytewax pipeline and write real time features to`order_book` feature group execute the following command.
 
 ```bash
-python -m bytewax.run "orderbook:get_flow('$FEATURE_GROUP_NAME', $FEATURE_GROUP_VERSION)" 
+python -m bytewax.run "1_feature_pipeline:get_flow('$FEATURE_GROUP_NAME', $FEATURE_GROUP_VERSION, '$HOPSWORKS_HOST', '$HOPSWORKS_PROJECT_NAME', '$HOPSWORKS_API_KEY')" 
 ```
 
 #### Materialize feature data to offline FG
