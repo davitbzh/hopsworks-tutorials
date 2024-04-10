@@ -6,7 +6,6 @@
 #  Dataset simulator
 
 from collections import defaultdict
-from faker import Faker
 import pandas as pd
 import numpy as np
 import datetime
@@ -16,6 +15,8 @@ import math
 import bisect
 from typing import Optional, Union, Any, Dict, List, TypeVar, Tuple
 import json
+
+from faker import Faker
 
 # Seed for Reproducibility
 faker = Faker()
@@ -81,7 +82,6 @@ SUSCEPTIBLE_CARDS_DISTRIBUTION_BY_AGE = {
     0.40: (84, 100),
 }
 
-
 def date_to_year_month(date_obj: datetime) -> datetime.date:
     return date_obj.strftime('%Y-%m')
 
@@ -119,7 +119,7 @@ def generate_df_with_profiles(credit_cards: list) -> pd.DataFrame:
     """."""
     profiles = []
     for credit_card in credit_cards:
-        address = faker.local_latlng(country_code='US')
+        address = faker.location_on_land()
         age = 0
         profile = None
         while age < 18 or age > 100:
@@ -202,7 +202,7 @@ def generate_transactions(credit_card_numbers: list, timestamps: list, categorie
     transactions = []
     for timestamp, category in zip(timestamps, categories):
         credit_card_number = random.choice(credit_card_numbers)
-        point_of_tr = faker.local_latlng(country_code='US')
+        point_of_tr = faker.location_on_land()
         transaction_id = generate_transaction_id(timestamp, credit_card_number, category['amount'])
         transactions.append({
             'tid': transaction_id,
@@ -258,16 +258,19 @@ def generate_chains():
 
 
 def generate_atm_withdrawal(credit_card_number: str, cash_amounts: list, length: int, \
-                            delta: int, radius: float = None, country_code='US') -> List[Dict]:
+                            delta: int, radius: float = None) -> List[Dict]:
     """."""
     atms = []
     start = datetime.datetime.strptime(START_DATE, DATE_FORMAT)
     end = datetime.datetime.strptime(END_DATE, DATE_FORMAT)
     timestamp = faker.date_time_between(start_date=start, end_date=end, tzinfo=None)
-    point_of_tr = faker.local_latlng(country_code=country_code)
+
+    point_of_tr = faker.location_on_land()
     latitude = point_of_tr[0]
     longitude = point_of_tr[1]
     city = point_of_tr[2]
+    country = point_of_tr[3]
+
     for _ in range(length):
         current = timestamp - datetime.timedelta(hours=delta)
         if radius is not None:
@@ -283,7 +286,7 @@ def generate_atm_withdrawal(credit_card_number: str, cash_amounts: list, length:
                      'latitude': latitude,
                      'longitude': longitude,
                      'city': city,
-                     'country': 'US',
+                     'country': country,
                      'fraud_label': 0
                      })
         timestamp = current
@@ -397,8 +400,8 @@ def update_normal_atm_withdrawals(fraudulent_atm_tr_indxs: list, normal_atm_with
                                                     pre_fraudulent_atm_tr['cc_num'], cash_amounts=cash_amounts,
                                                     length=1, delta=delta, radius=None)[0]
         fraudulent_atm_location = faker.location_on_land()
-        while fraudulent_atm_location[3] == 'US':
-            fraudulent_atm_location = faker.location_on_land()
+        # while fraudulent_atm_location[3] == 'US':
+        #    fraudulent_atm_location = faker.location_on_land()
 
         fraudulent_atm_tr['datetime'] = (datetime.datetime.strptime(pre_fraudulent_atm_tr['datetime'],
                                                                     DATE_FORMAT) + datetime.timedelta(
